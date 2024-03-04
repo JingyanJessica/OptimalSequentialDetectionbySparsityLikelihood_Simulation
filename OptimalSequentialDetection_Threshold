@@ -205,9 +205,11 @@ mean(ARL)
 ## Simulation of threshold of OCD
 set.seed(1)
 MC_ocd(dim=100, patience=5000, beta=1, sparsity="auto", MC_reps=100)
+11.67053   179.51870    54.61472
 
 set.seed(1)
 MC_ocd(dim=1000, patience=5000, beta=1, sparsity="auto", MC_reps=100)
+13.60018   1290.80185   76.98286
 
 ## Simulation of threshold of Sparsity likelihood
 R = 500
