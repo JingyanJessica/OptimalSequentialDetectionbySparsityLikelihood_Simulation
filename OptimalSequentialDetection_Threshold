@@ -11,7 +11,7 @@ library(doParallel)
 R = 500
 N = 100
 p0 = 1
-#p0 = 0.1
+#p0 = N^(-0.5)
 K = 200
 b = 53.5
 N_col = 40000
