@@ -1,4 +1,13 @@
 ## Simulation of threshold of Sparsity likelihood
+library(readxl)
+library(InspectChangepoint)
+library(hdbinseg)
+library(xtable)
+library(iterators)
+library(foreach)
+library(parallel)
+library(doParallel)
+
 R = 500
 gam = 5000
 lam1 = 1
