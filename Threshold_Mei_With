@@ -1,0 +1,46 @@
+## Simulation of threshold of Mei with p0
+R = 500
+lam = 2*(sqrt(2)-1)
+p0 = N^(-0.5)
+#p0 = 3*N^(-0.5)
+delta0 = 1
+N = 100
+b = 3.46
+N_col = 30000
+prop = numeric(R)
+ARL = numeric(R)
+
+Mei.thr.2 = function(Data,N_col,N,lam,p0,b){
+  Z = Data[,1]
+  g = log(1+p0*(lam*exp(Z/2)-1))
+  if (sum(g)>=b) {
+    res = 1
+  }else {
+    ps = 0
+    t = 2
+    while ((t<=N_col) & (ps<b)){
+      Z = Data[,t]
+      g = log(1+p0*(lam*exp(Z/2)-1))
+      ps = sum(g)
+      t = t+1 
+    }
+    res = t-1
+  }
+  res
+}
+
+est_Mei <- foreach(i=1:R) %dopar% {
+  set.seed(i)
+  seq = matrix(rnorm(N_col*N),nrow=N)
+  seq1 = matrix(0, ncol = N_col, nrow=N)
+  seq1[,1] = pmax(seq[,1]*delta0 - delta0^(2)/2, 0)
+  for (t in 2:N_col){
+    seq1[,t] = pmax(seq1[,(t-1)] + seq[,t]*delta0 - delta0^(2)/2, 0)
+  }
+  Mei.thr.2(Data=seq1,N_col=N_col,N=N,lam=lam,p0=p0,b=b)
+}
+
+for (j in 1:R){
+  ARL[j] <- est_Mei[[j]]
+}
+mean(ARL)
