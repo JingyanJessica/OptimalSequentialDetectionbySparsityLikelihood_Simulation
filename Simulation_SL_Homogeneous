@@ -1,0 +1,64 @@
+## Simulation of Sparsity likelihood
+R = 500
+gam = 5000
+lam1 = 1
+lam2 = sqrt(log(gam)/log(log(gam)))
+b = 7.16
+K = 200
+N = 100
+NN = 1
+EDD = numeric(R)
+
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
+SL.det.nor2 = function(Data,N_col,N,lam1,lam2,K,b,gam){
+  Z = Data[,1]
+  Z[Z<0] = 0
+  logpval=pnorm(-Z,log.p=TRUE)
+  f=log(1+(lam1*log(N)/N)*(1/(exp(logpval)*(2-logpval)^2)-0.5)+(lam2/sqrt(N*log(N)))*(1/sqrt(exp(logpval))-2))
+  ps=sum(f)
+  if (ps>=b) {
+    res = 1
+  }else {
+    ps = -10000
+    t = 2
+    while ((t<=N_col) & (max(ps)<b)){
+      # exponential grid
+      K1 = c(1:27, 35, 47, 63, 84, 113, 150,200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
+      Z = cusum/sqrt(k)
+      Z[Z<0] = 0
+      
+      logpval=pnorm(-Z,log.p=TRUE)
+      f=log(1+(lam1*log(N)/N)*(1/(exp(logpval)*(2-logpval)^2)-0.5)+(lam2/sqrt(N*log(N)))*(1/sqrt(exp(logpval))-2))
+      ps=apply(f,2,sum)
+      t = t+1 
+    }
+    res=t-1
+  }
+  res
+}
+
+Simu_SL <- foreach(i=1:R) %dopar% {
+  set.seed(i)
+  seq=matrix(rnorm(N*K),nrow=N)
+  mumat=matrix(nrow=N,ncol=K,data=0)
+  m = sample(1:N,NN)
+  mumat[m,1:K] = 1
+  seq1=seq+mumat
+  SL.det.nor2(Data=seq1,N_col=N_col, N=N,lam1=lam1,lam2=lam2,K=K,b=b,gam=gam)
+}
+
+for (j in 1:R){
+  EDD[j] <- Simu_SL[[j]]
+}
+mean(EDD)
