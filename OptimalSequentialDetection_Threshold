@@ -42,16 +42,11 @@ XS.thr.1 = function(Data,N_col,N,p0,K,b){
       y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
       cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
       k = t(matrix(rep(rev(K1),N),ncol = N))
-      #TT = min(K,t)
-      #y = matrix(Data[,(t-TT+1):t],nrow = N)
-      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      #k = t(matrix(rep(TT:1,N),ncol = N))
       Z = cusum/sqrt(k)
       Z[Z<0] = 0
       
       g = log(1-p0+p0*(exp(Z^(2)/2)))
       ps=apply(g,2,sum)
-      #ps=apply(f,2,sum)-log(TTT/4*(1/(mid-beg)+1/(end-mid)))
       t = t+1 
     }
     res = t-1
@@ -88,7 +83,6 @@ cumsum1 = function(x, K1){
 }
 
 Mei1.thr.2 = function(Data,N_col,N,delta0,b){
-  #stor = numeric(N_col)
   Z = Data[,1]
   g = max(delta0*Z-delta0^(2)/2)
   g[g<0] = 0
@@ -104,9 +98,6 @@ Mei1.thr.2 = function(Data,N_col,N,delta0,b){
       y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
       cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
       k = t(matrix(rep(rev(K1),N),ncol = N))
-      #y = matrix(Data[,1:t],nrow = N)
-      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      #k = t(matrix(rep(t:1,N),ncol = N))
       Z = delta0*cusum - k*delta0^(2)/2
       Z[Z<0] = 0
       ps=apply(Z,1,max)
@@ -141,7 +132,6 @@ prop = numeric(R)
 ARL = numeric(R)
 
 Mei.thr.2 = function(Data,N_col,N,lam,p0,b){
-  #stor = numeric(N_col)
   Z = Data[,1]
   g = log(1+p0*(lam*exp(Z/2)-1))
   if (sum(g)>=b) {
@@ -196,7 +186,6 @@ cumsum1 = function(x, K1){
 }
 
 TS.thr.2 = function(Data,N_col,N,p0,lam,K,b){
-  #stor = numeric(N_col)
   Z = Data[,1]
   Z[Z<0] = 0
   g = log(1+p0*(lam*exp(Z^(2)/4)-1))
@@ -212,16 +201,11 @@ TS.thr.2 = function(Data,N_col,N,p0,lam,K,b){
       y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
       cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
       k = t(matrix(rep(rev(K1),N),ncol = N))
-      #TT = min(K,t)
-      #y = matrix(Data[,(t-TT+1):t],nrow = N)
-      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      #k = t(matrix(rep(TT:1,N),ncol = N))
       Z = cusum/sqrt(k)
       Z[Z<0] = 0
       
       g = log(1+p0*(lam*exp(Z^(2)/4)-1))
       ps=apply(g,2,sum)
-      #ps=apply(f,2,sum)-log(TTT/4*(1/(mid-beg)+1/(end-mid)))
       t = t+1 
     }
     res = t-1
@@ -270,14 +254,11 @@ cumsum1 = function(x, K1){
 }
 
 SL.thr.nor2 = function(Data,N_col,N,lam1,lam2,K,b,gam){
-  #stor = numeric(N_col)
   Z = Data[,1]
   Z[Z<0] = 0
   logpval=pnorm(-Z,log.p=TRUE)
-  #logpval=log(2) + pnorm(-abs(Z),log.p=TRUE)
   f=log(1+(lam1*log(N)/N)*(1/(exp(logpval)*(2-logpval)^2)-0.5)+(lam2/sqrt(N*log(N)))*(1/sqrt(exp(logpval))-2))
   ps=sum(f)
-  #ps=sum(f)-log(gam)
   if (ps>=b) {
     res = 1
   }else {
@@ -290,17 +271,12 @@ SL.thr.nor2 = function(Data,N_col,N,lam1,lam2,K,b,gam){
       y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
       cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
       k = t(matrix(rep(rev(K1),N),ncol = N))
-      #y = matrix(Data[,1:t],nrow = N)
-      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      #k = t(matrix(rep(t:1,N),ncol = N))
       Z = cusum/sqrt(k)
       Z[Z<0] = 0
       
       logpval=pnorm(-Z,log.p=TRUE)
-      #logpval=log(2) + pnorm(-abs(Z),log.p=TRUE)
       f=log(1+(lam1*log(N)/N)*(1/(exp(logpval)*(2-logpval)^2)-0.5)+(lam2/sqrt(N*log(N)))*(1/sqrt(exp(logpval))-2))
       ps=apply(f,2,sum)
-      #ps=apply(f,2,sum)-log(gam/sqrt(k[1,]))
       t = t+1 
     }
     res=t-1
@@ -311,7 +287,6 @@ SL.thr.nor2 = function(Data,N_col,N,lam1,lam2,K,b,gam){
 est_SL <- foreach(i=1:R) %dopar% {
   set.seed(i)
   seq = matrix(rnorm(N_col*N),nrow=N)
-  #prop[j] = SL.thr.nor1(Data=seq,N_col=N_col,N=N,lam1=lam1,lam2=lam2,K=K,b=b)
   SL.thr.nor2(Data=seq,N_col=N_col,N=N,lam1=lam1,lam2=lam2,K=K,b=b,gam=gam)
 }
 
