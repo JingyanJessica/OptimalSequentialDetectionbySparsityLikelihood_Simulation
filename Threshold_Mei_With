@@ -1,4 +1,13 @@
 ## Simulation of threshold of Mei with p0
+library(readxl)
+library(InspectChangepoint)
+library(hdbinseg)
+library(xtable)
+library(iterators)
+library(foreach)
+library(parallel)
+library(doParallel)
+
 R = 500
 lam = 2*(sqrt(2)-1)
 p0 = N^(-0.5)
