@@ -1,0 +1,51 @@
+##Simulation of Mei with p0
+R = 500
+K = 200
+b = 3.46
+N = 100
+delta0 = 1
+lam = 0.64
+p0 = N^(-0.5)
+#p0 = 3*N^(-0.5)
+N_col = 200
+NN = 1
+EDD = numeric(R)
+
+Mei.thr.2 = function(Data,N_col,N,lam,p0,b){
+  Z = Data[,1]
+  g = log(1+p0*(lam*exp(Z/2)-1))
+  if (sum(g)>=b) {
+    res = 1
+  }else {
+    ps = 0
+    t = 2
+    while ((t<=N_col) & (ps<b)){
+      Z = Data[,t]
+      g = log(1+p0*(lam*exp(Z/2)-1))
+      ps = sum(g)
+      t = t+1 
+    }
+    res = t-1
+  }
+  res
+}
+
+Simu_Mei <- foreach(i=1:R) %dopar% {
+  set.seed(i)
+  seq=matrix(rnorm(N*K),nrow=N)
+  mumat=matrix(nrow=N,ncol=K,data=0)
+  m = sample(1:N,NN)
+  mumat[m,1:K] = 1  
+  seq1=seq+mumat
+  seq2 = matrix(0, ncol = N_col, nrow = N)
+  seq2[,1] = pmax(seq1[,1]*delta0 - delta0^(2)/2, 0)
+  for (t in 2:K){
+    seq2[,t] = pmax(seq2[,(t-1)] + seq1[,t]*delta0 - delta0^(2)/2, 0)
+  }
+  Mei.thr.2(Data=seq2,N=N,N_col=N_col,lam=lam,p0=p0,b=b)
+}
+
+for (j in 1:R){
+  EDD[j] <- Simu_Mei[[j]]
+}
+mean(EDD)
