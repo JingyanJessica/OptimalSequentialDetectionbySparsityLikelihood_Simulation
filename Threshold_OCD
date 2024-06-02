@@ -1,5 +1,14 @@
 ## Simulation of threshold of OCD
 library(ocd)
+library(readxl)
+library(InspectChangepoint)
+library(hdbinseg)
+library(xtable)
+library(iterators)
+library(foreach)
+library(parallel)
+library(doParallel)
+
 set.seed(1)
 MC_ocd(dim=100, patience=5000, beta=1, sparsity="auto", MC_reps=100)
 #11.67053   179.51870    54.61472
