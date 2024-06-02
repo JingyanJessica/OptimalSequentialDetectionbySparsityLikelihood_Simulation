@@ -18,6 +18,14 @@ N_col = 40000
 prop = numeric(R)
 ARL = numeric(R)
 
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
 XS.thr.1 = function(Data,N_col,N,p0,K,b){
   Z = Data[,1]
   Z[Z<0] = 0
@@ -28,10 +36,16 @@ XS.thr.1 = function(Data,N_col,N,p0,K,b){
     ps = 0
     t = 2
     while ((t<=N_col) & (max(ps)<b)){
-      TT = min(K,t)
-      y = matrix(Data[,(t-TT+1):t],nrow = N)
-      cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      k = t(matrix(rep(TT:1,N),ncol = N))
+      # exponential grid
+      K1 = c(1:27,40, 60, 89, 134, 200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
+      #TT = min(K,t)
+      #y = matrix(Data[,(t-TT+1):t],nrow = N)
+      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
+      #k = t(matrix(rep(TT:1,N),ncol = N))
       Z = cusum/sqrt(k)
       Z[Z<0] = 0
       
@@ -44,10 +58,6 @@ XS.thr.1 = function(Data,N_col,N,p0,K,b){
   }
   res
 }
-
-coress = 10
-cl <- makeCluster(coress)
-registerDoParallel(cl)
 
 est_XS <- foreach(i=1:R) %dopar% {
   set.seed(i)
@@ -69,6 +79,14 @@ N_col = 30000
 prop = numeric(R)
 ARL = numeric(R)
 
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
 Mei1.thr.2 = function(Data,N_col,N,delta0,b){
   #stor = numeric(N_col)
   Z = Data[,1]
@@ -80,9 +98,15 @@ Mei1.thr.2 = function(Data,N_col,N,delta0,b){
     ps = 0
     t = 2
     while ((t<=N_col) & (sum(ps)<b)){
-      y = matrix(Data[,1:t],nrow = N)
-      cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      k = t(matrix(rep(t:1,N),ncol = N))
+      # Exponential grid: 
+      K1 = c(1:27,40, 60, 89, 134, 200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
+      #y = matrix(Data[,1:t],nrow = N)
+      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
+      #k = t(matrix(rep(t:1,N),ncol = N))
       Z = delta0*cusum - k*delta0^(2)/2
       Z[Z<0] = 0
       ps=apply(Z,1,max)
@@ -163,6 +187,14 @@ N_col = 30000
 prop = numeric(R)
 ARL = numeric(R)
 
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
 TS.thr.2 = function(Data,N_col,N,p0,lam,K,b){
   #stor = numeric(N_col)
   Z = Data[,1]
@@ -174,10 +206,16 @@ TS.thr.2 = function(Data,N_col,N,p0,lam,K,b){
     ps = 0
     t = 2
     while ((t<=N_col) & (max(ps)<b)){
-      TT = min(K,t)
-      y = matrix(Data[,(t-TT+1):t],nrow = N)
-      cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      k = t(matrix(rep(TT:1,N),ncol = N))
+      # exponential grid
+      K1 = c(1:27,40, 60, 89, 134, 200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
+      #TT = min(K,t)
+      #y = matrix(Data[,(t-TT+1):t],nrow = N)
+      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
+      #k = t(matrix(rep(TT:1,N),ncol = N))
       Z = cusum/sqrt(k)
       Z[Z<0] = 0
       
@@ -223,12 +261,20 @@ N_col = 50000
 ARL = numeric(R)
 prop = numeric(R)
 
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
 SL.thr.nor2 = function(Data,N_col,N,lam1,lam2,K,b,gam){
   #stor = numeric(N_col)
   Z = Data[,1]
-  #Z[Z<0] = 0
+  Z[Z<0] = 0
   logpval=pnorm(-Z,log.p=TRUE)
-  #logpval=log(2)+pnorm(-abs(Z),log.p=TRUE)
+  #logpval=log(2) + pnorm(-abs(Z),log.p=TRUE)
   f=log(1+(lam1*log(N)/N)*(1/(exp(logpval)*(2-logpval)^2)-0.5)+(lam2/sqrt(N*log(N)))*(1/sqrt(exp(logpval))-2))
   ps=sum(f)
   #ps=sum(f)-log(gam)
@@ -238,15 +284,20 @@ SL.thr.nor2 = function(Data,N_col,N,lam1,lam2,K,b,gam){
     ps = -10000
     t = 2
     while ((t<=N_col) & (max(ps)<b)){
-      TT = min(K,t)
-      y = matrix(Data[,(t-TT+1):t],nrow = N)
-      cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      k = t(matrix(rep(TT:1,N),ncol = N))
+      # exponential grid
+      K1 = c(1:27, 35, 47, 63, 84, 113, 150,200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
+      #y = matrix(Data[,1:t],nrow = N)
+      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
+      #k = t(matrix(rep(t:1,N),ncol = N))
       Z = cusum/sqrt(k)
-      #Z[Z<0] = 0
+      Z[Z<0] = 0
       
       logpval=pnorm(-Z,log.p=TRUE)
-      #logpval=log(2)+pnorm(-abs(Z),log.p=TRUE)
+      #logpval=log(2) + pnorm(-abs(Z),log.p=TRUE)
       f=log(1+(lam1*log(N)/N)*(1/(exp(logpval)*(2-logpval)^2)-0.5)+(lam2/sqrt(N*log(N)))*(1/sqrt(exp(logpval))-2))
       ps=apply(f,2,sum)
       #ps=apply(f,2,sum)-log(gam/sqrt(k[1,]))
