@@ -1,4 +1,13 @@
 ## Simulation of threshold of Mei without p0
+library(readxl)
+library(InspectChangepoint)
+library(hdbinseg)
+library(xtable)
+library(iterators)
+library(foreach)
+library(parallel)
+library(doParallel)
+
 R = 500
 delta0 = 1
 N = 100
