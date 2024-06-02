@@ -18,6 +18,14 @@ N_col = 200
 NN = 1
 EDD = numeric(R)
 
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
 XS.thr.1 = function(Data,N_col,N,p0,K,b){
   Z = Data[,1]
   Z[Z<0] = 0
@@ -28,10 +36,16 @@ XS.thr.1 = function(Data,N_col,N,p0,K,b){
     ps = 0
     t = 2
     while ((t<=N_col) & (max(ps)<b)){
-      TT = min(K,t)
-      y = matrix(Data[,(t-TT+1):t],nrow = N)
-      cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      k = t(matrix(rep(TT:1,N),ncol = N))
+      # exponential grid
+      K1 = c(1:27,40, 60, 89, 134, 200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
+      #TT = min(K,t)
+      #y = matrix(Data[,(t-TT+1):t],nrow = N)
+      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
+      #k = t(matrix(rep(TT:1,N),ncol = N))
       Z = cusum/sqrt(k)
       Z[Z<0] = 0
       
@@ -44,10 +58,6 @@ XS.thr.1 = function(Data,N_col,N,p0,K,b){
   }
   res
 }
-
-coress = 10
-cl <- makeCluster(coress)
-registerDoParallel(cl)
 
 Simu_XS <- foreach(i=1:R) %dopar% {
   set.seed(i)
