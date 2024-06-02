@@ -1,0 +1,66 @@
+## Simulation of threshold of XS
+library(readxl)
+library(InspectChangepoint)
+library(hdbinseg)
+library(xtable)
+library(iterators)
+library(foreach)
+library(parallel)
+library(doParallel)
+
+R = 500
+N = 100
+p0 = 1
+#p0 = N^(-0.5)
+K = 200
+b = 53.5
+N_col = 40000
+prop = numeric(R)
+ARL = numeric(R)
+
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
+XS.thr.1 = function(Data,N_col,N,p0,K,b){
+  Z = Data[,1]
+  Z[Z<0] = 0
+  g = log(1-p0+p0*(exp(Z^(2)/2)))
+  if (sum(g)>=b) {
+    res = 1
+  }else {
+    ps = 0
+    t = 2
+    while ((t<=N_col) & (max(ps)<b)){
+      # exponential grid
+      K1 = c(1:27,40, 60, 89, 134, 200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
+      Z = cusum/sqrt(k)
+      Z[Z<0] = 0
+      
+      g = log(1-p0+p0*(exp(Z^(2)/2)))
+      ps=apply(g,2,sum)
+      t = t+1 
+    }
+    res = t-1
+  }
+  res
+}
+
+est_XS <- foreach(i=1:R) %dopar% {
+  set.seed(i)
+  seq = matrix(rnorm(N_col*N),nrow=N)
+  XS.thr.1(Data=seq,N_col=N_col,N=N,p0=p0,K=K,b=b)
+}
+
+for (j in 1:R){
+  ARL[j] <- est_XS[[j]]
+}
+mean(ARL)
