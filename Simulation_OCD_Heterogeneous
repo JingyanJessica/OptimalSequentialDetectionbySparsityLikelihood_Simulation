@@ -1,4 +1,14 @@
 ##Simulation of OCD
+library(readxl)
+library(InspectChangepoint)
+library(hdbinseg)
+library(xtable)
+library(iterators)
+library(foreach)
+library(parallel)
+library(doParallel)
+library(ocd)
+
 R = 500
 EDD = numeric(R)
 NN = 1
