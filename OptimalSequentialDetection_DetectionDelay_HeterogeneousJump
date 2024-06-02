@@ -7,6 +7,7 @@ library(iterators)
 library(foreach)
 library(parallel)
 library(doParallel)
+library(ocd)
 
 R = 500
 K = 200
@@ -258,7 +259,6 @@ N = 100
 thresh <- setNames(c(13.60018,1290.80185,76.98286), c('diag', 'off_d', 'off_s'))
 
 Simu_ocd <- foreach(i=1:R) %dopar% {
-  library(ocd)
   set.seed(i)
   m <- sample(1:N, NN)
   detector <- ChangepointDetector(dim=N, method='ocd',thresh=thresh, beta=1)
