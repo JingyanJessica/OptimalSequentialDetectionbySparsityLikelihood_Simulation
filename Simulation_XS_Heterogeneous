@@ -7,7 +7,6 @@ library(iterators)
 library(foreach)
 library(parallel)
 library(doParallel)
-library(ocd)
 
 R = 500
 K = 200
