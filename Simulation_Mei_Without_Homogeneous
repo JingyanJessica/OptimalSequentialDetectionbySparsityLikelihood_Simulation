@@ -1,0 +1,59 @@
+##Simulation of Mei without p0
+
+R = 500
+K = 200
+b = 88.5
+N = 100
+delta0 = 1
+N_col = 200
+NN = 1
+EDD = numeric(R)
+
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
+Mei1.thr.2 = function(Data,N_col,N,delta0,b){
+  Z = Data[,1]
+  g = max(delta0*Z-delta0^(2)/2)
+  g[g<0] = 0
+  if (sum(g)>=b) {
+    res = 1
+  }else {
+    ps = 0
+    t = 2
+    while ((t<=N_col) & (sum(ps)<b)){
+      # Exponential grid: 
+      K1 = c(1:27,40, 60, 89, 134, 200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
+      Z = delta0*cusum - k*delta0^(2)/2
+      Z[Z<0] = 0
+      ps=apply(Z,1,max)
+      t = t+1 
+    }
+    res = t-1
+  }
+  res
+}
+
+Simu_Mei1 <- foreach(i=1:R) %dopar% {
+  set.seed(i)
+  seq=matrix(rnorm(N*K),nrow=N)
+  mumat=matrix(nrow=N,ncol=K,data=0)
+  m = sample(1:N,NN)
+  mumat[m,1:K] = 1
+  seq1=seq+mumat
+  Mei1.thr.2(Data=seq1,N=N,N_col=N_col,delta0=delta0,b=b)
+}
+
+for (j in 1:R){
+  EDD[j] <- Simu_Mei1[[j]]
+}
+mean(EDD)
