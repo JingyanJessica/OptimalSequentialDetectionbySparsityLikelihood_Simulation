@@ -3,11 +3,11 @@ library(readxl)
 library(InspectChangepoint)
 library(hdbinseg)
 library(xtable)
-
 library(iterators)
 library(foreach)
 library(parallel)
 library(doParallel)
+
 R = 500
 K = 200
 b = 53.5
@@ -41,17 +41,11 @@ XS.thr.1 = function(Data,N_col,N,p0,K,b){
       K1 = K1[K1<=t]
       y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
       cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
-      k = t(matrix(rep(rev(K1),N),ncol = N))
-      #TT = min(K,t)
-      #y = matrix(Data[,(t-TT+1):t],nrow = N)
-      #cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      #k = t(matrix(rep(TT:1,N),ncol = N))
+      k = t(matrix(rep(rev(K1),N),ncol = N)
       Z = cusum/sqrt(k)
-      Z[Z<0] = 0
-      
+      Z[Z<0] = 0      
       g = log(1-p0+p0*(exp(Z^(2)/2)))
       ps=apply(g,2,sum)
-      #ps=apply(f,2,sum)-log(TTT/4*(1/(mid-beg)+1/(end-mid)))
       t = t+1 
     }
     res = t-1
@@ -64,7 +58,9 @@ Simu_XS <- foreach(i=1:R) %dopar% {
   seq=matrix(rnorm(N*K),nrow=N)
   mumat=matrix(nrow=N,ncol=K,data=0)
   m = sample(1:N,NN)
-  mumat[m,1:K]=1
+  for (j in 1:NN){
+    mumat[m[j],1:K] = sqrt(NN)/sqrt(j*sum(1/(1:NN)))
+  }
   seq1=seq+mumat
   XS.thr.1(Data=seq1,N_col=N_col,N=N,p0=p0,K=K,b=b)
 }
@@ -84,8 +80,15 @@ N_col = 200
 NN = 1
 EDD = numeric(R)
 
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
 Mei1.thr.2 = function(Data,N_col,N,delta0,b){
-  #stor = numeric(N_col)
   Z = Data[,1]
   g = max(delta0*Z-delta0^(2)/2)
   g[g<0] = 0
@@ -95,9 +98,12 @@ Mei1.thr.2 = function(Data,N_col,N,delta0,b){
     ps = 0
     t = 2
     while ((t<=N_col) & (sum(ps)<b)){
-      y = matrix(Data[,1:t],nrow = N)
-      cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      k = t(matrix(rep(t:1,N),ncol = N))
+      # Exponential grid: 
+      K1 = c(1:27,40, 60, 89, 134, 200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
       Z = delta0*cusum - k*delta0^(2)/2
       Z[Z<0] = 0
       ps=apply(Z,1,max)
@@ -113,7 +119,9 @@ Simu_Mei1 <- foreach(i=1:R) %dopar% {
   seq=matrix(rnorm(N*K),nrow=N)
   mumat=matrix(nrow=N,ncol=K,data=0)
   m = sample(1:N,NN)
-  mumat[m,1:K]=1
+  for (j in 1:NN){
+    mumat[m[j],1:K] = sqrt(NN)/sqrt(j*sum(1/(1:NN)))
+  }
   seq1=seq+mumat
   Mei1.thr.2(Data=seq1,N=N,N_col=N_col,delta0=delta0,b=b)
 }
@@ -137,7 +145,6 @@ NN = 1
 EDD = numeric(R)
 
 Mei.thr.2 = function(Data,N_col,N,lam,p0,b){
-  #stor = numeric(N_col)
   Z = Data[,1]
   g = log(1+p0*(lam*exp(Z/2)-1))
   if (sum(g)>=b) {
@@ -161,9 +168,11 @@ Simu_Mei <- foreach(i=1:R) %dopar% {
   seq=matrix(rnorm(N*K),nrow=N)
   mumat=matrix(nrow=N,ncol=K,data=0)
   m = sample(1:N,NN)
-  mumat[m,1:K]=1
+  for (j in 1:NN){
+    mumat[m[j],1:K] = sqrt(NN)/sqrt(j*sum(1/(1:NN)))
+  }
   seq1=seq+mumat
-  seq2 = matrix(0, ncol = N_col, nrow=N)
+  seq2 = matrix(0, ncol = N_col, nrow = N)
   seq2[,1] = pmax(seq1[,1]*delta0 - delta0^(2)/2, 0)
   for (t in 2:K){
     seq2[,t] = pmax(seq2[,(t-1)] + seq1[,t]*delta0 - delta0^(2)/2, 0)
@@ -188,8 +197,15 @@ N_col = 200
 NN = 1
 EDD = numeric(R)
 
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
 TS.thr.2 = function(Data,N_col,N,p0,lam,K,b){
-  #stor = numeric(N_col)
   Z = Data[,1]
   Z[Z<0] = 0
   g = log(1+p0*(lam*exp(Z^(2)/4)-1))
@@ -199,16 +215,17 @@ TS.thr.2 = function(Data,N_col,N,p0,lam,K,b){
     ps = 0
     t = 2
     while ((t<=N_col) & (max(ps)<b)){
-      TT = min(K,t)
-      y = matrix(Data[,(t-TT+1):t],nrow = N)
-      cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      k = t(matrix(rep(TT:1,N),ncol = N))
+      # exponential grid
+      K1 = c(1:27,40, 60, 89, 134, 200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
       Z = cusum/sqrt(k)
       Z[Z<0] = 0
       
       g = log(1+p0*(lam*exp(Z^(2)/4)-1))
       ps=apply(g,2,sum)
-      #ps=apply(f,2,sum)-log(TTT/4*(1/(mid-beg)+1/(end-mid)))
       t = t+1 
     }
     res = t-1
@@ -221,7 +238,9 @@ Simu_TS <- foreach(i=1:R) %dopar% {
   seq=matrix(rnorm(N*K),nrow=N)
   mumat=matrix(nrow=N,ncol=K,data=0)
   m = sample(1:N,NN)
-  mumat[m,1:K]=1
+  for (j in 1:NN){
+    mumat[m[j],1:K] = sqrt(NN)/sqrt(j*sum(1/(1:NN)))
+  }
   seq1=seq+mumat
   TS.thr.2(Data=seq1,N_col=N_col,N=N,p0=p0,lam=lam,K=K,b=b)
 }
@@ -244,10 +263,12 @@ Simu_ocd <- foreach(i=1:R) %dopar% {
   m <- sample(1:N, NN)
   detector <- ChangepointDetector(dim=N, method='ocd',thresh=thresh, beta=1)
   mumat <- rep(0, N)
-  mumat[m] <- 1
+  for (j in 1:NN){
+    mumat[m[j]] = sqrt(NN)/sqrt(j*sum(1/(1:NN)))
+  }
   new_mean <- mumat
   detector <- setStatus(detector, 'monitoring')
-  for (t in 1:200){
+  for (t in 1:K){
     x_new <- rnorm(N, new_mean)
     detector <- getData(detector, x_new)
   }
@@ -270,32 +291,38 @@ N = 100
 NN = 1
 EDD = numeric(R)
 
-SL.det.nor2 = function(Data,N,lam1,lam2,K,b,gam){
-  #stor = numeric(N_col)
+cumsum1 = function(x, K1){
+  res = c()
+  for (k in 1:length(K1)){
+    res = append(res, sum(x[1:K1[k]]))
+  }
+  res
+}
+
+SL.det.nor2 = function(Data,N_col,N,lam1,lam2,K,b,gam){
   Z = Data[,1]
-  #Z[Z<0] = 0
+  Z[Z<0] = 0
   logpval=pnorm(-Z,log.p=TRUE)
-  #logpval=log(2) + pnorm(-abs(Z),log.p=TRUE)
   f=log(1+(lam1*log(N)/N)*(1/(exp(logpval)*(2-logpval)^2)-0.5)+(lam2/sqrt(N*log(N)))*(1/sqrt(exp(logpval))-2))
   ps=sum(f)
-  #ps=sum(f)-log(gam)
   if (ps>=b) {
     res = 1
   }else {
     ps = -10000
     t = 2
-    while (max(ps)<b){
-      y = matrix(Data[,1:t],nrow = N)
-      cusum = t(apply(y,1,function(x) rev(cumsum(rev(x)))))
-      k = t(matrix(rep(t:1,N),ncol = N))
+    while ((t<=N_col) & (max(ps)<b)){
+      # exponential grid
+      K1 = c(1:27, 35, 47, 63, 84, 113, 150,200)
+      K1 = K1[K1<=t]
+      y = matrix(Data[,(t-max(K1)+1):t],nrow = N)
+      cusum = t(apply(y,1,function(x) rev(cumsum1(rev(x), K1))))
+      k = t(matrix(rep(rev(K1),N),ncol = N))
       Z = cusum/sqrt(k)
-      #Z[Z<0] = 0
+      Z[Z<0] = 0
       
       logpval=pnorm(-Z,log.p=TRUE)
-      #logpval=log(2) + pnorm(-abs(Z),log.p=TRUE)
       f=log(1+(lam1*log(N)/N)*(1/(exp(logpval)*(2-logpval)^2)-0.5)+(lam2/sqrt(N*log(N)))*(1/sqrt(exp(logpval))-2))
       ps=apply(f,2,sum)
-      #ps=apply(f,2,sum)-log(gam/sqrt(k[1,]))
       t = t+1 
     }
     res=t-1
@@ -308,9 +335,11 @@ Simu_SL <- foreach(i=1:R) %dopar% {
   seq=matrix(rnorm(N*K),nrow=N)
   mumat=matrix(nrow=N,ncol=K,data=0)
   m = sample(1:N,NN)
-  mumat[m,1:K]=1
+  for (j in 1:NN){
+    mumat[m[j],1:K] = sqrt(NN)/sqrt(j*sum(1/(1:NN)))
+  }
   seq1=seq+mumat
-  SL.det.nor2(Data=seq1,N=N,lam1=lam1,lam2=lam2,K=K,b=b,gam=gam)
+  SL.det.nor2(Data=seq1,N_col=N_col, N=N,lam1=lam1,lam2=lam2,K=K,b=b,gam=gam)
 }
 
 for (j in 1:R){
