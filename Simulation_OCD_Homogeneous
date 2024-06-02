@@ -1,0 +1,26 @@
+##Simulation of OCD
+R = 500
+EDD = numeric(R)
+NN = 1
+N = 100
+thresh <- setNames(c(13.60018,1290.80185,76.98286), c('diag', 'off_d', 'off_s'))
+
+Simu_ocd <- foreach(i=1:R) %dopar% {
+  set.seed(i)
+  m <- sample(1:N, NN)
+  detector <- ChangepointDetector(dim=N, method='ocd',thresh=thresh, beta=1)
+  mumat <- rep(0, N)
+  mumat[m,1:K] = 1
+  new_mean <- mumat
+  detector <- setStatus(detector, 'monitoring')
+  for (t in 1:K){
+    x_new <- rnorm(N, new_mean)
+    detector <- getData(detector, x_new)
+  }
+  status(detector)
+}
+
+for (j in 1:R){
+  EDD[j] <- Simu_ocd[[j]]
+}
+mean(EDD)
