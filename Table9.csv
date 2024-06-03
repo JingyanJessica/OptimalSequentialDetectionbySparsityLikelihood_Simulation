@@ -1,0 +1,4 @@
+﻿,N = 100,
+Test,C_{\gamma},ARL
+"SL(Poi,\lambda_{1}=1,\lambda_{2}=\sqrt{\frac{\log \gamma}{\log\log \gamma}} )",9.1,4865
+"SL(Bin,\lambda_{1}=1,\lambda_{2}=\sqrt{\frac{\log \gamma}{\log\log \gamma}})",9.1,5072
